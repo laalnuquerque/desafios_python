@@ -1,10 +1,16 @@
 import PyPDF2
 import os
+from google_images_search import GoogleImagesSearch
+from PIL import Image
 
-def gerar_relatorio_pdf(diretorio):
+def gerar_relatorio_pdf(diretorio, diretorio_imagem):
 
     arquivos_pdf = [f for f in os.listdir(diretorio) if f.endswith('.pdf')]
     arquivo_final = PyPDF2.PdfWriter()
+    nome_arquivo = pesquisa_imagem()
+    imagem_para_pdf(diretorio_imagem + nome_arquivo, 'pdf/capa.pdf')
+    capa = PyPDF2.PdfReader('pdf/capa.pdf').pages[0]
+    arquivo_final.add_page(capa)
 
     for nome_arquivo in sorted(arquivos_pdf):
         caminho_completo = os.path.join(diretorio, nome_arquivo)
@@ -19,10 +25,48 @@ def gerar_relatorio_pdf(diretorio):
 
         return None
 
+def pesquisa_imagem():
+    # Configurar a API do Google Imagens
+    gis = GoogleImagesSearch('AIzaSyDJ9r5DSYA7KTLuyBGc8-GjQAL5P85EksU', '737dd31d95ed449c2')
+
+    q = input("Digite o termo de pesquisa para imagens: ")
+
+    # Definir os parâmetros de busca
+    search_params = {
+        'q': q,
+        'num': 2,  # número de imagens que você quer obter
+        'safe': 'high',  # filtro de segurança
+        'fileType': 'jpg'  # tipo de arquivo das imagens
+    }
+
+    # Realizar a busca
+    gis.search(search_params=search_params)
+
+    # Obter os resultados
+    for image in gis.results():
+        # Aqui você pode fazer o que quiser com as imagens, como salvá-las em um diretório
+        file_name = os.path.basename(image.url)
+        image.download('image/' + file_name)
+
+    print("Acesse o diretorio 'documents/helo/script/desafios/image/' para ver as imagens baixadas.")
+    caminho =  input("Informe o nome da imagem que deseja adicionar ao relatório: ")
+    return caminho + '/' + caminho
+
+    # input("Pressione Enter para continuar...")
+    #
+    # # Limpar os resultados
+    # gis.clear_search_results()
+
+def imagem_para_pdf(caminho_imagem, caminho_pdf):
+    imagem = Image.open(caminho_imagem)
+    if imagem.mode != 'RGB':
+        imagem = imagem.convert('RGB')
+    imagem.save(caminho_pdf, 'PDF')
 
 if __name__ == '__main__':
     diretorio = 'arquivo_teste'
-    gerar_relatorio_pdf(diretorio)
+    diretorio_imagem = 'image/'
+    gerar_relatorio_pdf(diretorio, diretorio_imagem)
 
 
 
